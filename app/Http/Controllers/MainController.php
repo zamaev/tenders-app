@@ -25,7 +25,10 @@ class MainController extends Controller
             'password' => Hash::make($request->input('password')),
         ]);
 
-        Auth::loginUsingId($user->id);
+        $user->api_token = explode('|', $user->createToken('Token')->plainTextToken)[1];;
+        $user->save();
+
+        Auth::login($user);
 
         return redirect()->route('home');
     }
@@ -47,19 +50,10 @@ class MainController extends Controller
         ]);
     }
 
-    public function home(Request $request)
-    {
-        if (!$request->user()->api_token) {
-            $request->user()->api_token = explode('|', $request->user()->createToken('Token')->plainTextToken)[1];
-            $request->user()->save();
-        }
-        return view('home', ['token' => $request->user()->api_token]);
-    }
-
     public function update()
     {
         $path = storage_path('app/test_task_data.csv');
-        $rows = $this->readCSV($path, ['delimiter' => ',']);
+        $rows = $this->readCSV($path, ',');
         array_shift($rows);
         foreach ($rows as $row) {
             $tender = new Tenders();
@@ -71,16 +65,16 @@ class MainController extends Controller
             $tender->updated_at = strtotime($row[4]);
             $tender->save();
         }
-        return 'success';
+        return redirect()->route('update');
     }
 
-    public function readCSV($csvFile, $array)
+    public function readCSV($file, $delimiter)
     {
-        $file_handle = fopen($csvFile, 'r');
-        while (!feof($file_handle)) {
-            $line_of_text[] = fgetcsv($file_handle, 0, $array['delimiter']);
+        $f = fopen($file, 'r');
+        while (!feof($f)) {
+            $line[] = fgetcsv($f, 0, $delimiter);
         }
-        fclose($file_handle);
-        return $line_of_text;
+        fclose($f);
+        return $line;
     }
 }

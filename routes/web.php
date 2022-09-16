@@ -3,7 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MainController;
 use App\Models\Tenders;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
+
+Route::get('/', function (Request $request) {
+    return view('home', ['token' => $request->user()->api_token]);
+})->name('home')->middleware('auth');
+
 
 Route::get('/register', function () {
     if (Auth::check()) {
@@ -13,6 +20,7 @@ Route::get('/register', function () {
 })->name('register');
 
 Route::post('/register', [MainController::class, 'register']);
+
 
 Route::get('/login', function () {
     if (Auth::check()) {
@@ -30,11 +38,8 @@ Route::get('/logout', function () {
 })->name('logout');
 
 
-Route::get('/', [MainController::class, 'home'])->name('home')->middleware('auth');
-
-
 Route::get('/update', function () {
     return view('update', ['tenders' => (new Tenders())->all()]);
-})->name('update');
+})->name('update')->middleware('auth');
 
-Route::post('/update', [MainController::class, 'update']);//->middleware('auth');
+Route::post('/update', [MainController::class, 'update'])->middleware('auth');
